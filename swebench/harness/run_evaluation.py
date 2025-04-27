@@ -364,6 +364,11 @@ def get_dataset_from_preds(
                 f"Warning: Missing predictions for {len(missing_preds)} instance IDs."
             )
 
+    # drop predictions that do not have ids in dataset_ids, enables running partial datasets
+    # predictions = {
+    #     instance_id: pred for instance_id, pred in predictions.items()
+    #     if instance_id in dataset_ids
+    # }
     # check that all prediction IDs are in the dataset
     prediction_ids = set(predictions.keys())
     if prediction_ids - dataset_ids:
@@ -482,6 +487,15 @@ def main(
     predictions = get_predictions_from_file(predictions_path, dataset_name, split)
     predictions = {pred[KEY_INSTANCE_ID]: pred for pred in predictions}
 
+    print(f"Using dataset {dataset_name}")
+    # Filter predictions to only include patches that are in the instance_ids list, enables only processing partial sets of predictions
+    if instance_ids:
+        predictions = {
+            instance_id: pred for instance_id, pred in predictions.items()
+            if instance_id in instance_ids
+        }
+        print(f"comparing lengths {len(predictions)}")
+    
     # get dataset from predictions
     dataset = get_dataset_from_preds(
         dataset_name, split, instance_ids, predictions, run_id, rewrite_reports
